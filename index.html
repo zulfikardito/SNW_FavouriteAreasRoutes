@@ -1,0 +1,601 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="initial-scale=1,user-scalable=no,maximum-scale=1,width=device-width">
+        <meta name="mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <link rel="stylesheet" href="css/leaflet.css">
+        <link rel="stylesheet" href="css/L.Control.Layers.Tree.css">
+        <link rel="stylesheet" href="css/qgis2web.css">
+        <link rel="stylesheet" href="css/fontawesome-all.min.css">
+        <link rel="stylesheet" href="css/leaflet-measure.css">
+        <style>
+        html, body, #map {
+            width: 100%;
+            height: 100%;
+            padding: 0;
+            margin: 0;
+        }
+        </style>
+        <title></title>
+    </head>
+    <body>
+        <div id="map">
+        </div>
+        <script src="js/qgis2web_expressions.js"></script>
+        <script src="js/leaflet.js"></script>
+        <script src="js/L.Control.Layers.Tree.min.js"></script>
+        <script src="js/leaflet.rotatedMarker.js"></script>
+        <script src="js/leaflet.pattern.js"></script>
+        <script src="js/leaflet-hash.js"></script>
+        <script src="js/Autolinker.min.js"></script>
+        <script src="js/rbush.min.js"></script>
+        <script src="js/labelgun.min.js"></script>
+        <script src="js/labels.js"></script>
+        <script src="js/leaflet-measure.js"></script>
+        <script src="data/Railwaynetworks_3.js"></script>
+        <script src="data/Undergroundnetworks_4.js"></script>
+        <script src="data/Tramnetworks_5.js"></script>
+        <script src="data/Busstop_6.js"></script>
+        <script src="data/Tramstop_7.js"></script>
+        <script src="data/Undergroundstation_8.js"></script>
+        <script src="data/Trainstation_9.js"></script>
+        <script src="data/MostvisitedTowns_10.js"></script>
+        <script src="data/SuttonNightWatchOffice_11.js"></script>
+        <script>
+        var map = L.map('map', {
+            zoomControl:false, maxZoom:28, minZoom:1
+        }).fitBounds([[51.298197209691175,-0.26236318188846675],[51.45617596479413,0.020734619991859497]]);
+        var hash = new L.Hash(map);
+        map.attributionControl.setPrefix('<a href="https://github.com/tomchadwin/qgis2web" target="_blank">qgis2web</a> &middot; <a href="https://leafletjs.com" title="A JS library for interactive maps">Leaflet</a> &middot; <a href="https://qgis.org">QGIS</a>');
+        var autolinker = new Autolinker({truncate: {length: 30, location: 'smart'}});
+        // remove popup's row if "visible-with-data"
+        function removeEmptyRowsFromPopupContent(content, feature) {
+         var tempDiv = document.createElement('div');
+         tempDiv.innerHTML = content;
+         var rows = tempDiv.querySelectorAll('tr');
+         for (var i = 0; i < rows.length; i++) {
+             var td = rows[i].querySelector('td.visible-with-data');
+             var key = td ? td.id : '';
+             if (td && td.classList.contains('visible-with-data') && feature.properties[key] == null) {
+                 rows[i].parentNode.removeChild(rows[i]);
+             }
+         }
+         return tempDiv.innerHTML;
+        }
+        // add class to format popup if it contains media
+		function addClassToPopupIfMedia(content, popup) {
+			var tempDiv = document.createElement('div');
+			tempDiv.innerHTML = content;
+			if (tempDiv.querySelector('td img')) {
+				popup._contentNode.classList.add('media');
+					// Delay to force the redraw
+					setTimeout(function() {
+						popup.update();
+					}, 10);
+			} else {
+				popup._contentNode.classList.remove('media');
+			}
+		}
+        var zoomControl = L.control.zoom({
+            position: 'topleft'
+        }).addTo(map);
+        var measureControl = new L.Control.Measure({
+            position: 'topleft',
+            primaryLengthUnit: 'meters',
+            secondaryLengthUnit: 'kilometers',
+            primaryAreaUnit: 'sqmeters',
+            secondaryAreaUnit: 'hectares'
+        });
+        measureControl.addTo(map);
+        document.getElementsByClassName('leaflet-control-measure-toggle')[0].innerHTML = '';
+        document.getElementsByClassName('leaflet-control-measure-toggle')[0].className += ' fas fa-ruler';
+        var bounds_group = new L.featureGroup([]);
+        function setBounds() {
+        }
+        map.createPane('pane_GoogleMaps_0');
+        map.getPane('pane_GoogleMaps_0').style.zIndex = 400;
+        var layer_GoogleMaps_0 = L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+            pane: 'pane_GoogleMaps_0',
+            opacity: 1.0,
+            attribution: '',
+            minZoom: 1,
+            maxZoom: 28,
+            minNativeZoom: 0,
+            maxNativeZoom: 19
+        });
+        layer_GoogleMaps_0;
+        map.createPane('pane_DarkMatter_1');
+        map.getPane('pane_DarkMatter_1').style.zIndex = 401;
+        var layer_DarkMatter_1 = L.tileLayer('http://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png', {
+            pane: 'pane_DarkMatter_1',
+            opacity: 1.0,
+            attribution: '<a href="https://cartodb.com/basemaps/">Map tiles by CartoDB, under CC BY 3.0. Data by OpenStreetMap, under ODbL.</a>',
+            minZoom: 1,
+            maxZoom: 28,
+            minNativeZoom: 0,
+            maxNativeZoom: 20
+        });
+        layer_DarkMatter_1;
+        map.addLayer(layer_DarkMatter_1);
+        map.createPane('pane_Heatmap_AllParticipants_2');
+        map.getPane('pane_Heatmap_AllParticipants_2').style.zIndex = 402;
+        var img_Heatmap_AllParticipants_2 = 'data/Heatmap_AllParticipants_2.png';
+        var img_bounds_Heatmap_AllParticipants_2 = [[51.27760660094178,-0.25349614723604746],[51.47163916765279,-0.03089865630946427]];
+        var layer_Heatmap_AllParticipants_2 = new L.imageOverlay(img_Heatmap_AllParticipants_2,
+                                              img_bounds_Heatmap_AllParticipants_2,
+                                              {pane: 'pane_Heatmap_AllParticipants_2'});
+        bounds_group.addLayer(layer_Heatmap_AllParticipants_2);
+        map.addLayer(layer_Heatmap_AllParticipants_2);
+        function pop_Railwaynetworks_3(feature, layer) {
+            var popupContent = '<table>\
+                    <tr>\
+                        <td class="visible-with-data" id="name"colspan="2"><strong>name</strong><br />' + (feature.properties['name'] !== null ? autolinker.link(feature.properties['name'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                </table>';
+            var content = removeEmptyRowsFromPopupContent(popupContent, feature);
+			layer.on('popupopen', function(e) {
+				addClassToPopupIfMedia(content, e.popup);
+			});
+			layer.bindPopup(content, { maxHeight: 400 });
+        }
+
+        function style_Railwaynetworks_3_0() {
+            return {
+                pane: 'pane_Railwaynetworks_3',
+                opacity: 1,
+                color: 'rgba(82,5,136,0.3607843137254902)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 13.0,
+                fillOpacity: 0,
+                interactive: true,
+            }
+        }
+        map.createPane('pane_Railwaynetworks_3');
+        map.getPane('pane_Railwaynetworks_3').style.zIndex = 403;
+        map.getPane('pane_Railwaynetworks_3').style['mix-blend-mode'] = 'normal';
+        var layer_Railwaynetworks_3 = new L.geoJson(json_Railwaynetworks_3, {
+            attribution: '',
+            interactive: true,
+            dataVar: 'json_Railwaynetworks_3',
+            layerName: 'layer_Railwaynetworks_3',
+            pane: 'pane_Railwaynetworks_3',
+            onEachFeature: pop_Railwaynetworks_3,
+            style: style_Railwaynetworks_3_0,
+        });
+        bounds_group.addLayer(layer_Railwaynetworks_3);
+        function pop_Undergroundnetworks_4(feature, layer) {
+            var popupContent = '<table>\
+                    <tr>\
+                        <td class="visible-with-data" id="name"colspan="2"><strong>name</strong><br />' + (feature.properties['name'] !== null ? autolinker.link(feature.properties['name'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                </table>';
+            var content = removeEmptyRowsFromPopupContent(popupContent, feature);
+			layer.on('popupopen', function(e) {
+				addClassToPopupIfMedia(content, e.popup);
+			});
+			layer.bindPopup(content, { maxHeight: 400 });
+        }
+
+        function style_Undergroundnetworks_4_0() {
+            return {
+                pane: 'pane_Undergroundnetworks_4',
+                opacity: 1,
+                color: 'rgba(164,113,88,0.4117647058823529)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 13.0,
+                fillOpacity: 0,
+                interactive: true,
+            }
+        }
+        map.createPane('pane_Undergroundnetworks_4');
+        map.getPane('pane_Undergroundnetworks_4').style.zIndex = 404;
+        map.getPane('pane_Undergroundnetworks_4').style['mix-blend-mode'] = 'normal';
+        var layer_Undergroundnetworks_4 = new L.geoJson(json_Undergroundnetworks_4, {
+            attribution: '',
+            interactive: true,
+            dataVar: 'json_Undergroundnetworks_4',
+            layerName: 'layer_Undergroundnetworks_4',
+            pane: 'pane_Undergroundnetworks_4',
+            onEachFeature: pop_Undergroundnetworks_4,
+            style: style_Undergroundnetworks_4_0,
+        });
+        bounds_group.addLayer(layer_Undergroundnetworks_4);
+        function pop_Tramnetworks_5(feature, layer) {
+            var popupContent = '<table>\
+                    <tr>\
+                        <td class="visible-with-data" id="name"colspan="2"><strong>name</strong><br />' + (feature.properties['name'] !== null ? autolinker.link(feature.properties['name'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                </table>';
+            var content = removeEmptyRowsFromPopupContent(popupContent, feature);
+			layer.on('popupopen', function(e) {
+				addClassToPopupIfMedia(content, e.popup);
+			});
+			layer.bindPopup(content, { maxHeight: 400 });
+        }
+
+        function style_Tramnetworks_5_0() {
+            return {
+                pane: 'pane_Tramnetworks_5',
+                opacity: 1,
+                color: 'rgba(88,208,77,0.25882352941176473)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 13.0,
+                fillOpacity: 0,
+                interactive: true,
+            }
+        }
+        map.createPane('pane_Tramnetworks_5');
+        map.getPane('pane_Tramnetworks_5').style.zIndex = 405;
+        map.getPane('pane_Tramnetworks_5').style['mix-blend-mode'] = 'normal';
+        var layer_Tramnetworks_5 = new L.geoJson(json_Tramnetworks_5, {
+            attribution: '',
+            interactive: true,
+            dataVar: 'json_Tramnetworks_5',
+            layerName: 'layer_Tramnetworks_5',
+            pane: 'pane_Tramnetworks_5',
+            onEachFeature: pop_Tramnetworks_5,
+            style: style_Tramnetworks_5_0,
+        });
+        bounds_group.addLayer(layer_Tramnetworks_5);
+        function pop_Busstop_6(feature, layer) {
+            var popupContent = '<table>\
+                    <tr>\
+                        <td class="visible-with-data" id="name"colspan="2"><strong>name</strong><br />' + (feature.properties['name'] !== null ? autolinker.link(feature.properties['name'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td class="visible-with-data" id="desc"colspan="2"><strong>desc</strong><br />' + (feature.properties['desc'] !== null ? autolinker.link(feature.properties['desc'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td class="visible-with-data" id="category"colspan="2"><strong>category</strong><br />' + (feature.properties['category'] !== null ? autolinker.link(feature.properties['category'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                </table>';
+            var content = removeEmptyRowsFromPopupContent(popupContent, feature);
+			layer.on('popupopen', function(e) {
+				addClassToPopupIfMedia(content, e.popup);
+			});
+			layer.bindPopup(content, { maxHeight: 400 });
+        }
+
+        function style_Busstop_6_0() {
+            return {
+                pane: 'pane_Busstop_6',
+                radius: 4.0,
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1,
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(190,155,80,1.0)',
+                interactive: true,
+            }
+        }
+        map.createPane('pane_Busstop_6');
+        map.getPane('pane_Busstop_6').style.zIndex = 406;
+        map.getPane('pane_Busstop_6').style['mix-blend-mode'] = 'normal';
+        var layer_Busstop_6 = new L.geoJson(json_Busstop_6, {
+            attribution: '',
+            interactive: true,
+            dataVar: 'json_Busstop_6',
+            layerName: 'layer_Busstop_6',
+            pane: 'pane_Busstop_6',
+            onEachFeature: pop_Busstop_6,
+            pointToLayer: function (feature, latlng) {
+                var context = {
+                    feature: feature,
+                    variables: {}
+                };
+                return L.circleMarker(latlng, style_Busstop_6_0(feature));
+            },
+        });
+        bounds_group.addLayer(layer_Busstop_6);
+        function pop_Tramstop_7(feature, layer) {
+            var popupContent = '<table>\
+                    <tr>\
+                        <td class="visible-with-data" id="name"colspan="2"><strong>name</strong><br />' + (feature.properties['name'] !== null ? autolinker.link(feature.properties['name'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td class="visible-with-data" id="desc"colspan="2"><strong>desc</strong><br />' + (feature.properties['desc'] !== null ? autolinker.link(feature.properties['desc'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td class="visible-with-data" id="category"colspan="2"><strong>category</strong><br />' + (feature.properties['category'] !== null ? autolinker.link(feature.properties['category'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                </table>';
+            var content = removeEmptyRowsFromPopupContent(popupContent, feature);
+			layer.on('popupopen', function(e) {
+				addClassToPopupIfMedia(content, e.popup);
+			});
+			layer.bindPopup(content, { maxHeight: 400 });
+        }
+
+        function style_Tramstop_7_0() {
+            return {
+                pane: 'pane_Tramstop_7',
+                radius: 4.0,
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1,
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(127,204,40,1.0)',
+                interactive: true,
+            }
+        }
+        map.createPane('pane_Tramstop_7');
+        map.getPane('pane_Tramstop_7').style.zIndex = 407;
+        map.getPane('pane_Tramstop_7').style['mix-blend-mode'] = 'normal';
+        var layer_Tramstop_7 = new L.geoJson(json_Tramstop_7, {
+            attribution: '',
+            interactive: true,
+            dataVar: 'json_Tramstop_7',
+            layerName: 'layer_Tramstop_7',
+            pane: 'pane_Tramstop_7',
+            onEachFeature: pop_Tramstop_7,
+            pointToLayer: function (feature, latlng) {
+                var context = {
+                    feature: feature,
+                    variables: {}
+                };
+                return L.circleMarker(latlng, style_Tramstop_7_0(feature));
+            },
+        });
+        bounds_group.addLayer(layer_Tramstop_7);
+        function pop_Undergroundstation_8(feature, layer) {
+            var popupContent = '<table>\
+                    <tr>\
+                        <td class="visible-with-data" id="name"colspan="2"><strong>name</strong><br />' + (feature.properties['name'] !== null ? autolinker.link(feature.properties['name'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td class="visible-with-data" id="desc"colspan="2"><strong>desc</strong><br />' + (feature.properties['desc'] !== null ? autolinker.link(feature.properties['desc'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td class="visible-with-data" id="category"colspan="2"><strong>category</strong><br />' + (feature.properties['category'] !== null ? autolinker.link(feature.properties['category'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                </table>';
+            var content = removeEmptyRowsFromPopupContent(popupContent, feature);
+			layer.on('popupopen', function(e) {
+				addClassToPopupIfMedia(content, e.popup);
+			});
+			layer.bindPopup(content, { maxHeight: 400 });
+        }
+
+        function style_Undergroundstation_8_0() {
+            return {
+                pane: 'pane_Undergroundstation_8',
+                radius: 4.0,
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1,
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(62,74,240,1.0)',
+                interactive: true,
+            }
+        }
+        map.createPane('pane_Undergroundstation_8');
+        map.getPane('pane_Undergroundstation_8').style.zIndex = 408;
+        map.getPane('pane_Undergroundstation_8').style['mix-blend-mode'] = 'normal';
+        var layer_Undergroundstation_8 = new L.geoJson(json_Undergroundstation_8, {
+            attribution: '',
+            interactive: true,
+            dataVar: 'json_Undergroundstation_8',
+            layerName: 'layer_Undergroundstation_8',
+            pane: 'pane_Undergroundstation_8',
+            onEachFeature: pop_Undergroundstation_8,
+            pointToLayer: function (feature, latlng) {
+                var context = {
+                    feature: feature,
+                    variables: {}
+                };
+                return L.circleMarker(latlng, style_Undergroundstation_8_0(feature));
+            },
+        });
+        bounds_group.addLayer(layer_Undergroundstation_8);
+        function pop_Trainstation_9(feature, layer) {
+            var popupContent = '<table>\
+                    <tr>\
+                        <td class="visible-with-data" id="name"colspan="2"><strong>name</strong><br />' + (feature.properties['name'] !== null ? autolinker.link(feature.properties['name'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td class="visible-with-data" id="desc"colspan="2"><strong>desc</strong><br />' + (feature.properties['desc'] !== null ? autolinker.link(feature.properties['desc'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td class="visible-with-data" id="category"colspan="2"><strong>category</strong><br />' + (feature.properties['category'] !== null ? autolinker.link(feature.properties['category'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                </table>';
+            var content = removeEmptyRowsFromPopupContent(popupContent, feature);
+			layer.on('popupopen', function(e) {
+				addClassToPopupIfMedia(content, e.popup);
+			});
+			layer.bindPopup(content, { maxHeight: 400 });
+        }
+
+        function style_Trainstation_9_0() {
+            return {
+                pane: 'pane_Trainstation_9',
+                radius: 4.0,
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1,
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(164,0,3,1.0)',
+                interactive: true,
+            }
+        }
+        map.createPane('pane_Trainstation_9');
+        map.getPane('pane_Trainstation_9').style.zIndex = 409;
+        map.getPane('pane_Trainstation_9').style['mix-blend-mode'] = 'normal';
+        var layer_Trainstation_9 = new L.geoJson(json_Trainstation_9, {
+            attribution: '',
+            interactive: true,
+            dataVar: 'json_Trainstation_9',
+            layerName: 'layer_Trainstation_9',
+            pane: 'pane_Trainstation_9',
+            onEachFeature: pop_Trainstation_9,
+            pointToLayer: function (feature, latlng) {
+                var context = {
+                    feature: feature,
+                    variables: {}
+                };
+                return L.circleMarker(latlng, style_Trainstation_9_0(feature));
+            },
+        });
+        bounds_group.addLayer(layer_Trainstation_9);
+        function pop_MostvisitedTowns_10(feature, layer) {
+            var popupContent = '<table>\
+                    <tr>\
+                        <td class="visible-with-data" id="id"colspan="2"><strong>id</strong><br />' + (feature.properties['id'] !== null ? autolinker.link(feature.properties['id'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td class="visible-with-data" id="Town"colspan="2"><strong>Town</strong><br />' + (feature.properties['Town'] !== null ? autolinker.link(feature.properties['Town'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                </table>';
+            var content = removeEmptyRowsFromPopupContent(popupContent, feature);
+			layer.on('popupopen', function(e) {
+				addClassToPopupIfMedia(content, e.popup);
+			});
+			layer.bindPopup(content, { maxHeight: 400 });
+        }
+
+        function style_MostvisitedTowns_10_0() {
+            return {
+                pane: 'pane_MostvisitedTowns_10',
+                radius: 20.0,
+                opacity: 1,
+                color: 'rgba(35,35,35,0.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1,
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(51,175,209,0.4627450980392157)',
+                interactive: true,
+            }
+        }
+        map.createPane('pane_MostvisitedTowns_10');
+        map.getPane('pane_MostvisitedTowns_10').style.zIndex = 410;
+        map.getPane('pane_MostvisitedTowns_10').style['mix-blend-mode'] = 'normal';
+        var layer_MostvisitedTowns_10 = new L.geoJson(json_MostvisitedTowns_10, {
+            attribution: '',
+            interactive: true,
+            dataVar: 'json_MostvisitedTowns_10',
+            layerName: 'layer_MostvisitedTowns_10',
+            pane: 'pane_MostvisitedTowns_10',
+            onEachFeature: pop_MostvisitedTowns_10,
+            pointToLayer: function (feature, latlng) {
+                var context = {
+                    feature: feature,
+                    variables: {}
+                };
+                return L.circleMarker(latlng, style_MostvisitedTowns_10_0(feature));
+            },
+        });
+        bounds_group.addLayer(layer_MostvisitedTowns_10);
+        function pop_SuttonNightWatchOffice_11(feature, layer) {
+            var popupContent = '<table>\
+                    <tr>\
+                        <td class="visible-with-data" id="name"colspan="2"><strong>name</strong><br />' + (feature.properties['name'] !== null ? autolinker.link(feature.properties['name'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td class="visible-with-data" id="descriptio"colspan="2"><strong>descriptio</strong><br />' + (feature.properties['descriptio'] !== null ? autolinker.link(feature.properties['descriptio'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                </table>';
+            var content = removeEmptyRowsFromPopupContent(popupContent, feature);
+			layer.on('popupopen', function(e) {
+				addClassToPopupIfMedia(content, e.popup);
+			});
+			layer.bindPopup(content, { maxHeight: 400 });
+        }
+
+        function style_SuttonNightWatchOffice_11_0() {
+            return {
+                pane: 'pane_SuttonNightWatchOffice_11',
+                radius: 8.0,
+                opacity: 1,
+                color: 'rgba(50,87,128,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 2.0,
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(72,123,182,1.0)',
+                interactive: true,
+            }
+        }
+        map.createPane('pane_SuttonNightWatchOffice_11');
+        map.getPane('pane_SuttonNightWatchOffice_11').style.zIndex = 411;
+        map.getPane('pane_SuttonNightWatchOffice_11').style['mix-blend-mode'] = 'normal';
+        var layer_SuttonNightWatchOffice_11 = new L.geoJson(json_SuttonNightWatchOffice_11, {
+            attribution: '',
+            interactive: true,
+            dataVar: 'json_SuttonNightWatchOffice_11',
+            layerName: 'layer_SuttonNightWatchOffice_11',
+            pane: 'pane_SuttonNightWatchOffice_11',
+            onEachFeature: pop_SuttonNightWatchOffice_11,
+            pointToLayer: function (feature, latlng) {
+                var context = {
+                    feature: feature,
+                    variables: {}
+                };
+                return L.circleMarker(latlng, style_SuttonNightWatchOffice_11_0(feature));
+            },
+        });
+        bounds_group.addLayer(layer_SuttonNightWatchOffice_11);
+        map.addLayer(layer_SuttonNightWatchOffice_11);
+        var baseMaps = {};
+        var overlaysTree = [
+            {label: '<img src="legend/SuttonNightWatchOffice_11.png" /> Sutton Night Watch Office', layer: layer_SuttonNightWatchOffice_11},
+            {label: '<img src="legend/MostvisitedTowns_10.png" /> Most visited Towns', layer: layer_MostvisitedTowns_10},
+            {label: '<img src="legend/Trainstation_9.png" /> Train station', layer: layer_Trainstation_9},
+            {label: '<img src="legend/Undergroundstation_8.png" /> Underground station', layer: layer_Undergroundstation_8},
+            {label: '<img src="legend/Tramstop_7.png" /> Tram stop', layer: layer_Tramstop_7},
+            {label: '<img src="legend/Busstop_6.png" /> Bus stop', layer: layer_Busstop_6},
+            {label: '<img src="legend/Tramnetworks_5.png" /> Tram networks', layer: layer_Tramnetworks_5},
+            {label: '<img src="legend/Undergroundnetworks_4.png" /> Underground networks', layer: layer_Undergroundnetworks_4},
+            {label: '<img src="legend/Railwaynetworks_3.png" /> Railway networks', layer: layer_Railwaynetworks_3},
+            {label: "Heatmap_All Participants", layer: layer_Heatmap_AllParticipants_2},
+        {label: '<b>Basemap</b>', selectAllCheckbox: true, children: [
+            {label: "Dark Matter", layer: layer_DarkMatter_1},
+            {label: "Google Maps", layer: layer_GoogleMaps_0},]},]
+        var lay = L.control.layers.tree(null, overlaysTree,{
+            //namedToggle: true,
+            //selectorBack: false,
+            //closedSymbol: '&#8862; &#x1f5c0;',
+            //openedSymbol: '&#8863; &#x1f5c1;',
+            //collapseAll: 'Collapse all',
+            //expandAll: 'Expand all',
+            collapsed: false, 
+        });
+        lay.addTo(map);
+        setBounds();
+        L.ImageOverlay.include({
+            getBounds: function () {
+                return this._bounds;
+            }
+        });
+        </script>
+    </body>
+</html>
